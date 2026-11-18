@@ -1,47 +1,55 @@
-Ipackage com.dmms.app
+package com.dmms.app
 
-// 1. This matches LMMS <note> tag
 data class LmmsNote(
-    val pos: Int, // Start time in ticks (192 ticks = 1 bar)
-    val len: Int, // Length in ticks
-    val key: Int, // MIDI pitch (0-127, 60 is Middle C)
-    val vel: Int  // Velocity (0-100)
+    val pos: Int, 
+    val len: Int, 
+    val key: Int, 
+    val vel: Int  
 )
 
-// 2. This matches an LMMS Track
 data class LmmsTrack(
     val name: String,
-    val instrument: String, // e.g., "tripleoscillator"
+    val instrument: String, 
+    val type: String, // NEW: "instrument" or "beat"
     val notes: List<LmmsNote>
 )
 
-// 3. This matches the whole LMMS Project
 data class LmmsProject(
     val bpm: Int,
     val tracks: List<LmmsTrack>
 )
 
 object LmmsParser {
-    // This is a fake LMMS file to test our app! 
-    // It has a melody and a bassline.
     fun loadTestProject(): LmmsProject {
+        // Melody for the Piano Roll
         val synthNotes = listOf(
-            LmmsNote(pos = 0, len = 48, key = 60, vel = 100),   // C4
-            LmmsNote(pos = 48, len = 48, key = 64, vel = 100),  // E4
-            LmmsNote(pos = 96, len = 48, key = 67, vel = 100),  // G4
-            LmmsNote(pos = 144, len = 96, key = 72, vel = 100)  // C5
+            LmmsNote(pos = 0, len = 48, key = 60, vel = 100),   
+            LmmsNote(pos = 48, len = 48, key = 64, vel = 100),  
+            LmmsNote(pos = 96, len = 48, key = 67, vel = 100),  
+            LmmsNote(pos = 144, len = 96, key = 72, vel = 100)  
         )
         
-        val bassNotes = listOf(
-            LmmsNote(pos = 0, len = 96, key = 36, vel = 100),   // C2
-            LmmsNote(pos = 96, len = 96, key = 43, vel = 100)   // G2
+        // Drum pattern for the Beat/Bassline (16 steps = 1 bar)
+        val kickNotes = listOf(
+            LmmsNote(pos = 0, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 4, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 8, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 12, len = 1, key = 0, vel = 100)
+        )
+        
+        val hatNotes = listOf(
+            LmmsNote(pos = 2, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 6, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 10, len = 1, key = 0, vel = 100),
+            LmmsNote(pos = 14, len = 1, key = 0, vel = 100)
         )
 
         return LmmsProject(
             bpm = 140,
             tracks = listOf(
-                LmmsTrack(name = "TripleOscillator", instrument = "tripleoscillator", notes = synthNotes),
-                LmmsTrack(name = "Kicker", instrument = "kicker", notes = bassNotes)
+                LmmsTrack(name = "TripleOscillator", instrument = "tripleoscillator", type = "instrument", notes = synthNotes),
+                LmmsTrack(name = "Kicker", instrument = "kicker", type = "beat", notes = kickNotes),
+                LmmsTrack(name = "Hi-Hat", instrument = "sample", type = "beat", notes = hatNotes)
             )
         )
     }
