@@ -3,6 +3,7 @@ package com.dmms.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,20 +14,23 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainStudio()
+            DmmsApp()
         }
     }
 }
@@ -35,6 +39,52 @@ val DarkBg = Color(0xFF1E1E1E)
 val PanelBg = Color(0xFF2A2A2A)
 val AccentGreen = Color(0xFF00E676)
 val TextGray = Color(0xFFB0B0B0)
+
+@Composable
+fun DmmsApp() {
+    var showSplash by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(2500) // I bumped this to 2.5 seconds so you can read the text!
+        showSplash = false
+    }
+
+    if (showSplash) {
+        SplashScreen()
+    } else {
+        MainStudio()
+    }
+}
+
+@Composable
+fun SplashScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // The Logo Image
+        Image(
+            painter = painterResource(id = R.drawable.dmms_logo),
+            contentDescription = "DMMS Logo",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop 
+        )
+
+        // The Tribute Text at the bottom
+        Text(
+            text = "Inspired by Linux MultiMedia Studio (LMMS)",
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
 
 @Composable
 fun MainStudio() {
