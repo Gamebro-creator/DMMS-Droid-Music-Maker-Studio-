@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,11 +90,12 @@ fun SplashScreen() {
 @Composable
 fun MainStudio() {
     var selectedTab by remember { mutableStateOf("Project") }
-    var currentProject: LmmsProject? by remember { mutableStateOf(null) }
-    var currentBpm: Int by remember { mutableStateOf(140) }
+    
+    // We hold the project in a mutable state so we can update the notes
+    var currentProject by remember { mutableStateOf<LmmsProject?>(null) }
+    var currentBpm by remember { mutableStateOf(140) }
 
     Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
-        // FULLY POPULATED TOP BAR
         TopBar(
             bpm = currentBpm,
             onLoadClick = {
@@ -107,7 +110,6 @@ fun MainStudio() {
             if (selectedTab == "Project") {
                 Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
                     
-                    // TOP PANEL: Song Editor (Timeline)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -120,10 +122,9 @@ fun MainStudio() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // BOTTOM PANELS: Piano Roll & Mixer
                     Row(modifier = Modifier.fillMaxWidth().weight(0.6f)) {
                         
-                        // Bottom Left: Piano Roll
+                        // PIANO ROLL PANEL
                         Box(
                             modifier = Modifier
                                 .weight(0.65f)
@@ -131,12 +132,25 @@ fun MainStudio() {
                                 .background(PanelBg)
                                 .border(1.dp, BorderColor)
                         ) {
-                            PianoRoll(project = currentProject)
+                            PianoRoll(
+                                project = currentProject,
+                                onNoteAdded = { newNote ->
+                                    // Update the first instrument track with the new note
+                                    if (currentProject != null) {
+                                        val updatedTracks = currentProject!!.tracks.map { track ->
+                                            if (track.type == "instrument") {
+                                                track.copy(notes = track.notes + newNote)
+                                            } else track
+                                        }
+                                        currentProject = currentProject!!.copy(tracks = updatedTracks)
+                                    }
+                                }
+                            )
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Bottom Right: Mixer
+                        // MIXER PANEL
                         Box(
                             modifier = Modifier
                                 .weight(0.35f)
@@ -158,21 +172,44 @@ fun MainStudio() {
 }
 
 @Composable
-fun PianoRoll(project: LmmsProject?) {
+fun PianoRoll(project: LmmsProject?, onNoteAdded: (LmmsNote) -> Unit) {
+    val gridSize = 20f // Size of the grid squares
+
     Row(modifier = Modifier.fillMaxSize()) {
+        // LEFT: Piano Keys
         Canvas(modifier = Modifier.width(40.dp).fillMaxHeight()) {
-            val keyHeight = 20f
             for (i in 0..40) {
-                drawRect(color = Color.White, topLeft = Offset(0f, i * keyHeight), size = Size(size.width, keyHeight))
+                drawRect(color = Color.White, topLeft = Offset(0f, i * gridSize), size = Size(size.width, gridSize))
                 if (i % 2 == 1) {
-                    drawRect(color = Color.Black, topLeft = Offset(0f, i * keyHeight), size = Size(size.width * 0.6f, keyHeight))
+                    drawRect(color = Color.Black, topLeft = Offset(0f, i * gridSize), size = Size(size.width * 0.6f, gridSize))
                 }
-                drawLine(color = Color.Gray, start = Offset(0f, i * keyHeight), end = Offset(size.width, i * keyHeight), strokeWidth = 1f)
+                drawLine(color = Color.Gray, start = Offset(0f, i * gridSize), end = Offset(size.width, i * gridSize), strokeWidth = 1f)
             }
         }
 
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val gridSize = 20f
+        // RIGHT: Interactive Grid
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        // 1. Calculate which grid square was tapped
+                        val tappedCol = (offset.x / gridSize).toInt()
+                        val tappedRow = (offset.y / gridSize).toInt()
+
+                        // 2. Convert to LMMS data format
+                        // We map 1 grid square = 24 ticks (1/8th note) for demo purposes
+                        val newPos = tappedCol * 24 
+                        val newKey = 72 - tappedRow // Invert Y axis for MIDI pitch
+
+                        // 3. Create the note and send it back to the main state
+                        if (newKey in 0..127) { // Ensure it's a valid MIDI note
+                            onNoteAdded(LmmsNote(pos = newPos, len = 24, key = newKey, vel = 100))
+                        }
+                    }
+                }
+        ) {
+            // Draw Grid Lines
             for (i in 0..(size.width / gridSize).toInt()) {
                 drawLine(color = Color.DarkGray, start = Offset(i * gridSize, 0f), end = Offset(i * gridSize, size.height), strokeWidth = 1f)
             }
@@ -180,14 +217,15 @@ fun PianoRoll(project: LmmsProject?) {
                 drawLine(color = Color.DarkGray, start = Offset(0f, i * gridSize), end = Offset(size.width, i * gridSize), strokeWidth = 1f)
             }
 
-            project?.tracks?.filter { it.type == "instrument" }?.forEach { track: LmmsTrack ->
-                track.notes.forEach { note: LmmsNote ->
-                    val xPos = note.pos * 0.5f 
+            // Draw Notes
+            project?.tracks?.filter { it.type == "instrument" }?.forEach { track ->
+                track.notes.forEach { note ->
+                    val xPos = (note.pos / 24f) * gridSize 
                     val yPos = (72 - note.key) * gridSize 
                     drawRect(
                         color = AccentGreen,
                         topLeft = Offset(xPos, yPos),
-                        size = Size(note.len * 0.5f, gridSize - 1f)
+                        size = Size(gridSize - 1f, gridSize - 1f)
                     )
                 }
             }
@@ -198,35 +236,22 @@ fun PianoRoll(project: LmmsProject?) {
 @Composable
 fun TopBar(bpm: Int, onLoadClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(PanelBg)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().background(PanelBg).padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // LEFT: Logo & Transport
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Placeholder for Logo
             Text("🎵 DMMS", color = AccentGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(end = 16.dp))
             
-            Button(
-                onClick = { }, 
-                colors = ButtonDefaults.buttonColors(containerColor = AccentGreen), 
-                shape = RoundedCornerShape(8.dp), 
-                modifier = Modifier.size(40.dp), 
-                contentPadding = PaddingValues(0.dp)
-            ) {
+            Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = AccentGreen), shape = RoundedCornerShape(8.dp), modifier = Modifier.size(40.dp), contentPadding = PaddingValues(0.dp)) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "Play", tint = Color.Black, modifier = Modifier.size(28.dp))
             }
             IconButton(onClick = { }) { Text("⏸", color = Color.White, fontSize = 20.sp) }
             IconButton(onClick = { }) { Text("⏹", color = Color.White, fontSize = 20.sp) }
-            
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(onClick = { }) { Icon(Icons.Filled.Refresh, contentDescription = "Loop", tint = TextGray, modifier = Modifier.size(20.dp)) }
         }
 
-        // MIDDLE: BPM, Time Signature, Time
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("$bpm", color = AccentGreen, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -244,7 +269,6 @@ fun TopBar(bpm: Int, onLoadClick: () -> Unit) {
             }
         }
 
-        // RIGHT: Save, Load, Settings, Menu
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { }) { Icon(Icons.Filled.Save, contentDescription = "Save", tint = TextGray) }
             IconButton(onClick = onLoadClick) { Icon(Icons.Filled.Menu, contentDescription = "Load", tint = AccentGreen) }
