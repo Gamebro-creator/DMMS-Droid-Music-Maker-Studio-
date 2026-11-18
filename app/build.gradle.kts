@@ -12,6 +12,12 @@ android {
         versionCode = 1
         versionName = "0.1"
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.4"
+    }
 }
 dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
