@@ -1,54 +1,33 @@
-package com.dmms.app
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            DmmsScreen()
-        }
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+android {
+    namespace = "com.dmms.app"
+    compileSdk = 34
+    defaultConfig {
+        applicationId = "com.dmms.app"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "0.1"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.3"
     }
 }
-
-@Composable
-fun DmmsScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF1A1A1A)), 
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "DMMS Alpha",
-            color = Color.White,
-            fontSize = 32.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Droid Music Maker Studio",
-            color = Color.Gray,
-            fontSize = 16.sp
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Button(
-            onClick = { /* Audio engine comes later! */ },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676))
-        ) {
-            Text("▶ PLAY", color = Color.Black, fontSize = 20.sp)
-        }
-    }
+dependencies {
+    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.compose.material3:material3:1.1.1")
 }
