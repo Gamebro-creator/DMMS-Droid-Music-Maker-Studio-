@@ -7,7 +7,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -91,14 +95,14 @@ fun TopBar() {
             }
             Spacer(modifier = Modifier.width(16.dp))
             
-            // Pause Icon
+            // Pause Icon (Using safe text)
             IconButton(onClick = { }) {
-                Icon(Icons.Filled.Pause, contentDescription = "Pause", tint = Color.White)
+                Text("⏸", color = Color.White, fontSize = 24.sp)
             }
             
-            // Stop Icon
+            // Stop Icon (Using safe text)
             IconButton(onClick = { }) {
-                Icon(Icons.Filled.Stop, contentDescription = "Stop", tint = Color.White)
+                Text("⏹", color = Color.White, fontSize = 24.sp)
             }
         }
 
@@ -127,11 +131,12 @@ fun Sidebar() {
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Using safe built-in icons to prevent memory crashes
         SidebarItem(Icons.Filled.Home, "Project")
         SidebarItem(Icons.Filled.List, "Samples")
         SidebarItem(Icons.Filled.PlayArrow, "Instr.")
         SidebarItem(Icons.Filled.Build, "Effects")
-        SidebarItem(Icons.Filled.Settings, "Settings") 
+        SidebarItem(Icons.Filled.Settings, "Settings")
     }
 }
 
