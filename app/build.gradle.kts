@@ -27,6 +27,10 @@ android {
     }
 }
 dependencies {
+    // This BOM aligns all Compose library versions automatically
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    
+    // The BOM handles the versions for these
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.compose.material3:material3:1.2.0")
-}
+} 
