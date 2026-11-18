@@ -26,34 +26,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DmmsApp()
+            MainStudio()
         }
     }
 }
 
-// Define our colors based on your Gemini image
 val DarkBg = Color(0xFF1E1E1E)
 val PanelBg = Color(0xFF2A2A2A)
 val AccentGreen = Color(0xFF00E676)
 val TextGray = Color(0xFFB0B0B0)
 
 @Composable
-fun DmmsApp() {
+fun MainStudio() {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
     ) {
-        // 1. Top Transport Bar
         TopBar()
         
-        // 2. Main Content Area (Sidebar + Workspace)
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
             Sidebar()
             
-            // Right Workspace (Where the piano roll will go)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -76,9 +72,7 @@ fun TopBar() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Transport Buttons (Play, Pause, Stop)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Professional Play Button
             Button(
                 onClick = { },
                 colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
@@ -95,18 +89,15 @@ fun TopBar() {
             }
             Spacer(modifier = Modifier.width(16.dp))
             
-            // Pause Icon (Using safe text)
             IconButton(onClick = { }) {
                 Text("⏸", color = Color.White, fontSize = 24.sp)
             }
             
-            // Stop Icon (Using safe text)
             IconButton(onClick = { }) {
                 Text("⏹", color = Color.White, fontSize = 24.sp)
             }
         }
 
-        // BPM and Time Display
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("140", color = AccentGreen, fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -131,7 +122,6 @@ fun Sidebar() {
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Using safe built-in icons to prevent memory crashes
         SidebarItem(Icons.Filled.Home, "Project")
         SidebarItem(Icons.Filled.List, "Samples")
         SidebarItem(Icons.Filled.PlayArrow, "Instr.")
