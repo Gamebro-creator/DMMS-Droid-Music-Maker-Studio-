@@ -12,9 +12,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -84,10 +84,11 @@ fun SplashScreen() {
 @Composable
 fun MainStudio() {
     var selectedTab by remember { mutableStateOf("Project") }
-    var currentProject by remember { mutableStateOf<LmmsProject?>(null) }
-    var currentBpm by remember { mutableStateOf(140) }
     
-    // NEW: State to track if we are in Piano Roll or Beat Editor
+    // FIX: Explicitly told the compiler this is LmmsProject
+    var currentProject: LmmsProject? by remember { mutableStateOf(null) }
+    var currentBpm: Int by remember { mutableStateOf(140) }
+    
     var editorMode by remember { mutableStateOf("Piano") } 
 
     Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
@@ -102,11 +103,9 @@ fun MainStudio() {
         Row(modifier = Modifier.fillMaxSize()) {
             Sidebar(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
             
-            // The Workspace
             Column(modifier = Modifier.fillMaxSize().background(Color(0xFF151515))) {
                 if (selectedTab == "Project") {
                     
-                    // THE TOGGLE BUTTONS
                     Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.Center) {
                         Button(
                             onClick = { editorMode = "Piano" },
@@ -123,7 +122,6 @@ fun MainStudio() {
                         }
                     }
 
-                    // Show the correct editor based on the toggle
                     if (editorMode == "Piano") {
                         PianoRoll(project = currentProject)
                     } else {
@@ -142,7 +140,6 @@ fun MainStudio() {
 @Composable
 fun PianoRoll(project: LmmsProject?) {
     Row(modifier = Modifier.fillMaxSize()) {
-        // LEFT: Piano Keys
         Canvas(modifier = Modifier.width(60.dp).fillMaxHeight()) {
             val keyHeight = 40f
             for (i in 0..30) {
@@ -154,10 +151,8 @@ fun PianoRoll(project: LmmsProject?) {
             }
         }
 
-        // RIGHT: The Grid
         Canvas(modifier = Modifier.fillMaxSize()) {
             val gridSize = 40f
-            
             for (i in 0..(size.width / gridSize).toInt()) {
                 drawLine(color = Color.DarkGray, start = Offset(i * gridSize, 0f), end = Offset(i * gridSize, size.height), strokeWidth = 1f)
             }
@@ -165,9 +160,8 @@ fun PianoRoll(project: LmmsProject?) {
                 drawLine(color = Color.DarkGray, start = Offset(0f, i * gridSize), end = Offset(size.width, i * gridSize), strokeWidth = 1f)
             }
 
-            // Only draw INSTRUMENT tracks here
-            project?.tracks?.filter { it.type == "instrument" }?.forEach { track ->
-                track.notes.forEach { note ->
+            project?.tracks?.filter { it.type == "instrument" }?.forEach { track: LmmsTrack ->
+                track.notes.forEach { note: LmmsNote ->
                     val xPos = note.pos.toFloat() 
                     val yPos = (72 - note.key) * gridSize 
                     drawRect(
@@ -184,22 +178,19 @@ fun PianoRoll(project: LmmsProject?) {
 @Composable
 fun BeatBaselineView(project: LmmsProject?) {
     Row(modifier = Modifier.fillMaxSize()) {
-        // LEFT: Track Names
         Column(modifier = Modifier.width(100.dp).fillMaxHeight().background(PanelBg)) {
             val beatTracks = project?.tracks?.filter { it.type == "beat" } ?: emptyList()
-            beatTracks.forEach { track ->
+            beatTracks.forEach { track: LmmsTrack ->
                 Box(modifier = Modifier.fillMaxWidth().height(50.dp).padding(4.dp), contentAlignment = Alignment.CenterStart) {
                     Text(track.name, color = Color.White, fontSize = 12.sp)
                 }
             }
         }
 
-        // RIGHT: Step Sequencer Grid
         Canvas(modifier = Modifier.fillMaxSize()) {
             val rowHeight = 50f
             val stepWidth = 40f
             
-            // Draw Grid
             for (i in 0..(size.width / stepWidth).toInt()) {
                 drawLine(color = Color.DarkGray, start = Offset(i * stepWidth, 0f), end = Offset(i * stepWidth, size.height), strokeWidth = 1f)
             }
@@ -209,12 +200,10 @@ fun BeatBaselineView(project: LmmsProject?) {
                 drawLine(color = Color.DarkGray, start = Offset(0f, i * rowHeight), end = Offset(size.width, i * rowHeight), strokeWidth = 1f)
             }
 
-            // Draw Notes
-            beatTracks.forEachIndexed { trackIndex, track ->
-                track.notes.forEach { note ->
+            beatTracks.forEachIndexed { trackIndex: Int, track: LmmsTrack ->
+                track.notes.forEach { note: LmmsNote ->
                     val xPos = note.pos * stepWidth
                     val yPos = trackIndex * rowHeight
-                    
                     drawRect(
                         color = BeatBlue,
                         topLeft = Offset(xPos, yPos),
@@ -239,8 +228,10 @@ fun TopBar(bpm: Int, onLoadClick: () -> Unit) {
             IconButton(onClick = { }) { Text("⏸", color = Color.White, fontSize = 24.sp) }
             IconButton(onClick = { }) { Text("⏹", color = Color.White, fontSize = 24.sp) }
             Spacer(modifier = Modifier.width(32.dp))
+            
+            // FIX: Changed Icon to Menu (valid core icon)
             IconButton(onClick = onLoadClick) {
-                Icon(Icons.Filled.Folder, contentDescription = "Load", tint = AccentGreen)
+                Icon(Icons.Filled.Menu, contentDescription = "Load", tint = AccentGreen)
             }
         }
 
