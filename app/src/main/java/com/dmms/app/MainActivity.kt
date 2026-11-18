@@ -3,8 +3,11 @@ package com.dmms.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,11 +27,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 1. FULL SCREEN MODE: Hides the status bar and navigation bar
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+
         setContent {
             DmmsApp()
         }
@@ -39,20 +53,28 @@ val DarkBg = Color(0xFF1E1E1E)
 val PanelBg = Color(0xFF2A2A2A)
 val AccentGreen = Color(0xFF00E676)
 val TextGray = Color(0xFFB0B0B0)
+val SelectedGreen = Color(0xFF004D40) // A dark green for the selected menu
 
 @Composable
 fun DmmsApp() {
     var showSplash by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        delay(2500) // I bumped this to 2.5 seconds so you can read the text!
+        delay(2500) 
         showSplash = false
     }
 
-    if (showSplash) {
-        SplashScreen()
-    } else {
-        MainStudio()
+    // 2. FADE-IN TRANSITION: Crossfade smoothly swaps the screens
+    Crossfade(
+        targetState = showSplash,
+        animationSpec = tween(durationMillis = 1000), // 1 second fade
+        label = "SplashToStudio"
+    ) { isSplash ->
+        if (isSplash) {
+            SplashScreen()
+        } else {
+            MainStudio()
+        }
     }
 }
 
@@ -63,7 +85,6 @@ fun SplashScreen() {
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // The Logo Image
         Image(
             painter = painterResource(id = R.drawable.dmms_logo),
             contentDescription = "DMMS Logo",
@@ -71,7 +92,15 @@ fun SplashScreen() {
             contentScale = ContentScale.Crop 
         )
 
-        // The Tribute Text at the bottom
+        // 4. LOADING SPINNER
+        CircularProgressIndicator(
+            color = AccentGreen,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(top = 250.dp) // Adjust this to move it below your logo
+        )
+
+        // The Tribute Text
         Text(
             text = "Inspired by Linux MultiMedia Studio (LMMS)",
             color = Color.White,
@@ -88,6 +117,9 @@ fun SplashScreen() {
 
 @Composable
 fun MainStudio() {
+    // 3. CLICKABLE MENUS: State to track which sidebar item is selected
+    var selectedTab by remember { mutableStateOf("Project") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -98,15 +130,23 @@ fun MainStudio() {
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
-            Sidebar()
+            Sidebar(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it }
+            )
             
+            // The workspace changes based on what you click!
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xFF151515)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Piano Roll Coming Soon", color = TextGray)
+                if (selectedTab == "Project") {
+                    Text("Piano Roll Coming Soon", color = TextGray)
+                } else {
+                    Text("$selectedTab Screen (Coming Soon)", color = TextGray)
+                }
             }
         }
     }
@@ -163,7 +203,7 @@ fun TopBar() {
 }
 
 @Composable
-fun Sidebar() {
+fun Sidebar(selectedTab: String, onTabSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
             .width(90.dp)
@@ -172,29 +212,40 @@ fun Sidebar() {
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SidebarItem(Icons.Filled.Home, "Project")
-        SidebarItem(Icons.Filled.List, "Samples")
-        SidebarItem(Icons.Filled.PlayArrow, "Instr.")
-        SidebarItem(Icons.Filled.Build, "Effects")
-        SidebarItem(Icons.Filled.Settings, "Settings")
+        SidebarItem(Icons.Filled.Home, "Project", selectedTab, onTabSelected)
+        SidebarItem(Icons.Filled.List, "Samples", selectedTab, onTabSelected)
+        SidebarItem(Icons.Filled.PlayArrow, "Instr.", selectedTab, onTabSelected)
+        SidebarItem(Icons.Filled.Build, "Effects", selectedTab, onTabSelected)
+        SidebarItem(Icons.Filled.Settings, "Settings", selectedTab, onTabSelected)
     }
 }
 
 @Composable
-fun SidebarItem(icon: ImageVector, label: String) {
+fun SidebarItem(
+    icon: ImageVector, 
+    label: String, 
+    selectedTab: String, 
+    onTabSelected: (String) -> Unit
+) {
+    val isSelected = selectedTab == label
+    val bgColor = if (isSelected) SelectedGreen else Color.Transparent
+    val iconColor = if (isSelected) AccentGreen else TextGray
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onTabSelected(label) } // Makes it clickable!
+            .background(bgColor)
             .padding(vertical = 16.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = TextGray,
+            tint = iconColor,
             modifier = Modifier.size(28.dp)
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, color = TextGray, fontSize = 11.sp)
+        Text(label, color = iconColor, fontSize = 11.sp)
     }
 }
