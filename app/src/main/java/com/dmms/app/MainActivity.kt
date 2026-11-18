@@ -127,11 +127,11 @@ fun Sidebar() {
             .padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SidebarItem(Icons.Filled.Folder, "Project")
-        SidebarItem(Icons.Filled.LibraryMusic, "Samples")
-        SidebarItem(Icons.Filled.Piano, "Instr.")
-        SidebarItem(Icons.Filled.Tune, "Effects")
-        SidebarItem(Icons.Filled.Settings, "Settings")
+        SidebarItem(Icons.Filled.Home, "Project")
+        SidebarItem(Icons.Filled.List, "Samples")
+        SidebarItem(Icons.Filled.PlayArrow, "Instr.")
+        SidebarItem(Icons.Filled.Build, "Effects")
+        SidebarItem(Icons.Filled.Settings, "Settings") 
     }
 }
 
